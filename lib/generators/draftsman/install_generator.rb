@@ -9,8 +9,9 @@ module Draftsman
     desc 'Creates config initializer and generates (but does not run) a migration to add a drafts table.'
     source_root File.expand_path('../templates', __FILE__)
     class_option :skip_initializer, :type => :boolean, :default => false, :desc => 'Skip generation of the boilerplate initializer at `config/initializers/draftsman.rb`.'
-    class_option :with_changes, :type => :boolean, :default => false, :desc => 'Store changeset (diff) with each draft.'
-    class_option :with_pg_json, :type => :boolean, :default => false, :desc => 'Use PostgreSQL JSON data type for serialized data.'
+    class_option :with_changes,   :type => :boolean, :default => false, :desc => 'Store changeset (diff) with each draft.'
+    class_option :with_pg_json,   :type => :boolean, :default => false, :desc => 'Use PostgreSQL JSON data type for serialized data.'
+    class_option :with_pg_hstore, :type => :boolean, :default => false, :desc => 'Use PostgreSQL Hstore data type for serialized data.'
 
     def create_migration_file
       if options.with_pg_json?
@@ -18,6 +19,13 @@ module Draftsman
 
         if options.with_changes?
           migration_template 'add_object_changes_column_to_drafts_json.rb',
+                             'db/migrate/add_object_changes_column_to_drafts.rb'
+        end
+      elsif options.with_pg_hstore?
+        migration_template 'create_drafts_hstore.rb', 'db/migrate/create_drafts.rb'
+
+        if options.with_changes?
+          migration_template 'add_object_changes_column_to_drafts_hstore.rb',
                              'db/migrate/add_object_changes_column_to_drafts.rb'
         end
       else
