@@ -10,6 +10,9 @@
 # Note: this option is not needed if you're using the PostgreSQL JSON data type for the `object`,
 # `object_changes`, and `previous_draft` columns.
 # Draftsman.serializer = Draftsman::Serializers::Json
+# Note: this option is not needed if you're using the PostgreSQL Hstore data type for the `object`,
+# `object_changes`, and `previous_draft` columns.
+# Draftsman.serializer = Draftsman::Serializers::Hstore
 
 # Field which records when a draft was created.
 # Draftsman.timestamp_field = :created_at
