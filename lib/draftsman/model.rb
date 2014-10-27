@@ -45,6 +45,8 @@ module Draftsman
         # any more ActiveRecord models than we need to.
         send :include, InstanceMethods
 
+        send :define_model_callbacks, :draft_publish
+
         class_attribute :draftsman_options
         self.draftsman_options = options.dup
 
@@ -54,7 +56,7 @@ module Draftsman
         class_attribute :draft_class_name
         self.draft_class_name = options[:class_name] || Draftsman.draft_class_name
 
-        [:ignore, :skip, :only].each do |key|
+        [:ignore, :skip, :only, :instance_variables].each do |key|
           draftsman_options[key] = ([draftsman_options[key]].flatten.compact || []).map(&:to_s)
         end
 
@@ -347,6 +349,8 @@ module Draftsman
           self.class.serialize_attributes_for_draftsman attributes
         end
 
+        _attrs.merge! attributes_changes
+
         self.class.draft_class.object_col_is_json? ? _attrs : Draftsman.serializer.dump(_attrs)
       end
 
@@ -366,7 +370,7 @@ module Draftsman
       def changed_and_not_ignored_for_draft(options = {})
         options[:previous_changes] ||= false
 
-        my_changed = options[:previous_changes] ? previous_changes.keys : self.changed
+        my_changed = options[:previous_changes] ? previous_changes.keys : self.changed.concat(attributes_changes.keys)
 
         ignore = self.class.draftsman_options[:ignore]
         skip   = self.class.draftsman_options[:skip]
@@ -381,6 +385,16 @@ module Draftsman
       # Returns whether or not the updates change this draft back to the original state
       def changed_to_original_for_draft?
         send(self.draft_association_name).present? && send(self.class.draft_association_name).update? && !changed_notably_for_draft?
+      end
+
+      def attributes_changes
+        attrs = draftsman_options[:instance_variables].map do |key|
+          value = self.send(key)
+          next unless value
+          [key, value]
+        end
+
+        Hash[attrs.compact]
       end
 
       # Returns array of attributes that have changed for the object.
