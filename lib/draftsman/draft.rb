@@ -179,6 +179,7 @@ class Draftsman::Draft < ActiveRecord::Base
         attributes_to_change = only.any? ? only : self.item.attribute_names
         attributes_to_change = attributes_to_change - ignore + ['published_at', "#{self.item.class.draft_association_name}_id"] - skip
 
+        self.item.draftsman_event = self.event
         self.item.run_callbacks :draft_publish do
           # Save without validations or callbacks
           self.item.update_columns self.item.attributes.slice(*attributes_to_change)
