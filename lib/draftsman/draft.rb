@@ -156,7 +156,7 @@ class Draftsman::Draft < ActiveRecord::Base
   # -  For `create` drafts, adds a value for the `published_at` timestamp on the item and destroys the draft.
   # -  For `update` drafts, applies the drafted changes to the item and destroys the draft.
   # -  For `destroy` drafts, destroys the item and the draft.
-  def publish!
+  def publish!(trigger_callbacks: false)
     ActiveRecord::Base.transaction do
       case self.event
       when 'create', 'update'
@@ -181,8 +181,12 @@ class Draftsman::Draft < ActiveRecord::Base
 
         self.item.draftsman_event = self.event
         self.item.run_callbacks :draft_publish do
-          # Save without validations or callbacks
-          self.item.update_columns self.item.attributes.slice(*attributes_to_change)
+          attributes = self.item.attributes.slice(*attributes_to_change)
+          if trigger_callbacks
+            self.item.update_attributes attributes
+          else
+            self.item.update_columns attributes
+          end
           self.item.reload
 
           # Destroy draft
