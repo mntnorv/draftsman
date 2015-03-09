@@ -44,6 +44,7 @@ class Draftsman::Draft < ActiveRecord::Base
     _changes = self.class.object_changes_col_is_json? ? self.object_changes : Draftsman.serializer.load(self.object_changes)
 
     @changeset ||= HashWithIndifferentAccess.new(_changes).tap do |changes|
+      next unless Draftsman.serialized_attributes?
       item_type.constantize.unserialize_draft_attribute_changes(changes)
     end
   rescue
@@ -214,7 +215,7 @@ class Draftsman::Draft < ActiveRecord::Base
         model = item.reload
 
         attrs = self.class.object_col_is_json? ? self.object : Draftsman.serializer.load(object)
-        model.class.unserialize_attributes_for_draftsman attrs
+        model.class.unserialize_attributes_for_draftsman attrs if Draftsman.serialized_attributes?
 
         attrs.each do |key, value|
           # Skip counter_cache columns

@@ -55,6 +55,13 @@ module Draftsman
     Draftsman.config.serializer = value
   end
 
+  # ActiveRecord 5 drops support for serialized attributes; for previous
+  # versions of ActiveRecord it is supported, we have a config option 
+  # to enable it within PaperTrail.
+  def self.serialized_attributes?
+    !!Draftsman.config.serialized_attributes && ::ActiveRecord::VERSION::MAJOR < 5
+  end
+
   # Returns who is reponsible for any changes that occur.
   def self.whodunnit
     draftsman_store[:whodunnit]

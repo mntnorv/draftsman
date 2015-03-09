@@ -346,6 +346,7 @@ module Draftsman
         object ||= self
 
         _attrs = object.attributes.except(*self.class.draftsman_options[:skip]).tap do |attributes|
+          next unless Draftsman.serialized_attributes?
           self.class.serialize_attributes_for_draftsman attributes
         end
 
@@ -406,8 +407,10 @@ module Draftsman
 
         new_changes = my_changes.delete_if do |key, value|
           !notably_changed_attributes_for_draft(previous_changes: options[:previous_changes]).include?(key)
-        end.tap do |changes|
-          self.class.serialize_draft_attribute_changes(changes) # Use serialized value for attributes when necessary
+        end
+
+        if Draftsman.serialized_attributes?
+          self.class.serialize_draft_attribute_changes(new_changes) # Use serialized value for attributes when necessary
         end
 
         new_changes.each do |attribute, value|
